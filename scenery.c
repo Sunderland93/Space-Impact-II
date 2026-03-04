@@ -46,44 +46,49 @@ void EmptyScenery(SceneryList *List) {
     *List = NULL; /* Ne mutasson sehova, mert nincs semmi lefoglalva */
 }
 
-/** A tájat kirajzoló és a listáját kezelõ funkció, bemenete a táj láncolt listája, a pixeltérkép, ahova rajzolni fog,
-    valamint egy igaz-hamis érték, ami azt jelzi, hogy a táj mozoghat-e tovább, vagy sem */
 void HandleScenery(SceneryList *List, Uint8 *PixelMap, Uint8 Move, PlayerObject *Player, Sint8 Level) {
-    Scenery *First = *List; /* Az elsõ elem tárolása, mert a pointer módosul a lista bejárásával, ezért vissza kell majd állítani */
-    Sint16 LastX = 0; /* Az utolsó rajzolt képpont */
-    Object Model; /* Az aktuálisan kirajzolt modell tárolója */
-    while (*List) { /* Ameddig van elem a listán */
-        if (Move) /* Ha fõellenség került a játékos elé, a táj megáll mozogni */
-            (*List)->Pos.x--; /* Egyébként a táj balra úszik folyamatosan */
-        Model = GetObject((*List)->Model); /* Előre szükség van az objektum lekérésére, a mérete miatt */
-        if (Level != 1 && Intersect((*List)->Pos, Model.Size, Player->Pos, NewVec2(10, 7))) /* Ütközéskor sebződjön a játékos, védelmen át is, de a felhős szinten ne */
+    Scenery *First = *List;
+    Sint16 LastX = 0;
+    Object Model;
+
+    while (*List) {
+        if (Move)
+            (*List)->Pos.x--;
+
+        Model = GetObject((*List)->Model);
+
+        if (Level != 1 && Intersect((*List)->Pos, Model.Size, Player->Pos, NewVec2(10, 7)))
             Player->Lives--;
-        if ((*List)->Pos.x < -Model.Size.x) { /* Ha balra kiúszott az egész objektum */
-            *List = (*List)->Next; /* Elõre ugorjon a következõ elemre, mielõtt felszadítaná a memóriahelyét */
-            free(First); /* Nyugodtan lehet a kiindulási helyet felszabadítani, mert a tájat balról jobbra tölti fel a játék, így ha kiesik valamelyik, az biztos az elsõ */
-            First = *List; /* Az új elsõ elem a lista következõ eleme legyen */
-        } else { /* Ha a képernyõn van a listaelem */
-            LastX = (*List)->Pos.x + Model.Size.x; /* Utolsó pozíció tárolása, ha esetleg hozzá kellene fűzni egy tájelemet a végéhez */
-            DrawObject(PixelMap, Model, (*List)->Pos); /* Aktuális tájelem kirajzolása */
-            *List = (*List)->Next; /* Folytatás a következõ elemmel */
+
+        if ((*List)->Pos.x < -Model.Size.x) {
+            *List = (*List)->Next;
+            free(First);
+            First = *List;
+        } else {
+            LastX = (*List)->Pos.x + Model.Size.x;
+            DrawObject(PixelMap, Model, (*List)->Pos);
+            *List = (*List)->Next;
         }
     }
-    if (Level != 0) {
-        while (LastX < 84) { /* Amíg nincs teljesen végigrajzolva a képernyő */
+
+    if (Level != 0 && ScData[Level].Objects > 0) {
+        while (LastX < 84) {
             Object Model;
-            Scenery* NewScenery = (Scenery*)malloc(sizeof(Scenery)); /* Adjon hozzá újat */
-            NewScenery->Model = ScData[Level].FirstObject + rand() % ScData[Level].Objects; /* Véletlenszerű grafikai azonosító választása a szint objektumai közül */
-            Model = GetObject(NewScenery->Model); /* Az objektumra szükség lesz, a méretei miatt */
-            NewScenery->Pos = NewVec2(LastX, ScData[Level].Upper ? 0 : 48 - Model.Size.y); /* Elhelyezés a jelenlegi elemek után, pályától függően fel vagy le */
-            NewScenery->Next = NULL; /* Nincs következő elem, lista vége jel */
-            LastX = NewScenery->Pos.x + Model.Size.x; /* Utolsó pozíció frissítése az új elemre */
-            if (First == NULL) /* Ha nincs semmi a listán */
-                First = NewScenery; /* Fűzze hozzá ezt a függvény utolsó sora segítségével */
+            Scenery* NewScenery = (Scenery*)malloc(sizeof(Scenery));
+            NewScenery->Model = ScData[Level].FirstObject + rand() % ScData[Level].Objects;
+            Model = GetObject(NewScenery->Model);
+            NewScenery->Pos = NewVec2(LastX, ScData[Level].Upper ? 0 : 48 - Model.Size.y);
+            NewScenery->Next = NULL;
+            LastX = NewScenery->Pos.x + Model.Size.x;
+
+            if (First == NULL)
+                First = NewScenery;
             else {
-                for (*List = First; (*List)->Next; *List = (*List)->Next); /* Keresse meg a lista végét */
-                (*List)->Next = NewScenery; /* És fűzze hozzá */
+                for (*List = First; (*List)->Next; *List = (*List)->Next);
+                (*List)->Next = NewScenery;
             }
         }
     }
-    *List = First; /* Az új elsõ elem beállítása */
+
+    *List = First;
 }

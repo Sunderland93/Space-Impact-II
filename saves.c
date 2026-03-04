@@ -54,7 +54,7 @@ void PlaceTopScore(unsigned int *Arr, Uint16 Entry) {
 /** Fájlnév hozzáfűzése egy elérési úthoz azonosító alapján **/
 void FillFileName(char* Path, Uint16 FileID) {
     char Number[6]; /* Szövegként az azonosító, 100000 csak nem lesz */
-    itoa(FileID, Number, 10); /* Számból szöveg készítése */
+    snprintf(Number, sizeof(Number), "%d", FileID); /* Számból szöveg készítése */
     strcat(Path, Number); /* Fájlnév hozzáfűzése az elérési úthoz */
     strcat(Path, ".dat"); /* Kiterjesztés hozzáfűzése az elérési úthoz */
 }

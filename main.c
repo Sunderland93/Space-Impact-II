@@ -83,14 +83,19 @@ int main(int argc, char *argv[]) {
         OldPixelMap[i] = 1; /* A régi pixeltérkép legyen teljesen aktív (=fekete), hogy a háttérrel töltse ki az első képkocka */
 
     /** Hang inicializálása **/
-    audio.freq = SAMPLE_RATE; /* Mintavételezés az alapértelmezett frekvencián */
-    audio.format = AUDIO_S16; /* Előjeles 16 bites egész minták */
-    audio.channels = 1; /* Monó hang */
-    audio.samples = 1024; /* Ennyi mintára hívja meg a hangkezelőt */
-    audio.callback = AudioCallback; /* Hangkezelő függvény */
-    audio.userdata = &AudioFlags; /* A hangkezelő függvénynek folyamatosan átadott paraméter */
-    if (SDL_OpenAudio(&audio, NULL) >= 0) /* Ha sikerül inicializálni a hangot */
-        SDL_PauseAudio(0); /* Indítsa is el */
+    audio.freq = SAMPLE_RATE;
+    audio.format = AUDIO_S16SYS;
+    audio.channels = 1;
+    audio.samples = 1024;
+    audio.callback = AudioCallback;
+    audio.userdata = &AudioFlags;
+
+    if (SDL_OpenAudio(&audio, NULL) == 0) {
+        SDL_PauseAudio(0);
+        printf("Audio OK\n");
+    } else {
+        printf("Audio failed: %s\n", SDL_GetError());
+    }
 
     /** Pixeltérképek kibontása **/
     UncompressFont();
@@ -231,7 +236,7 @@ int main(int argc, char *argv[]) {
             /** Játék vége képernyõ **/
             } else if (Level == LevelCount) {
                 char ScoreText[6]; /* Maximum ötjegyű lehet + lezáró karakter */
-                itoa(Player.Score, ScoreText, 10); /* Pontszám szöveggé alakítása */
+                snprintf(ScoreText, sizeof(ScoreText), "%d", Player.Score); /* Pontszám szöveggé alakítása */
                 DrawText(PixelMap, "Game over\nYour score:", NewVec2(1, 1), 9);
                 DrawText(PixelMap, ScoreText, NewVec2(1, 19), 0);
             #ifdef PAUSE
@@ -255,7 +260,7 @@ int main(int argc, char *argv[]) {
                 #ifdef LEGACY_TOP_SCORE
                 const Uint8 OneSign[24] = {0,0,1,0,0,1,1,0,1,1,1,0,0,1,1,0,0,1,1,0,1,1,1,1}; /* Egy egyes pixeltérképe */
                 char ScoreText[6]; /* Maximum ötjegyű lehet + lezáró karakter */
-                itoa(TopScores[0], ScoreText, 10); /* Pontszám szöveggé alakítása */
+                snprintf(ScoreText, sizeof(ScoreText), "%d", Player.Score); /* Pontszám szöveggé alakítása */
                 DrawText(PixelMap, "Top score:", NewVec2(1, 1), 0);
                 DrawText(PixelMap, ScoreText, NewVec2(1, 11), 0); /* A rögzített legjobb pontszám kiírása */
                 for (i = 0; i < 4; ++i) { /* Az egyes oszlopai */
